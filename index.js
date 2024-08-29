@@ -16,18 +16,18 @@ async function connectToDb() {
   }
 }
 
-// app.use('/', (req, res) => {
-//   res.send({ message: "Serving on local" });
-// });
-
-app.get('/data', async (req, res) => {
-  try {
-    let data = await db.collection('peaks').find({}).toArray();
-    res.status(200).send(data);
-  } catch (error) {
-    res.status(500).send({ error: 'Failed to fetch data' });
-  }
+app.use('/', async (req, res) => {
+    try {
+        let data = await db.collection('peaks').find({}).toArray();
+            res.status(200).send(data);
+          } catch (error) {
+            res.status(500).send({ error: 'Failed to fetch data' });
+          }
 });
+
+// app.get('/data', async (req, res) => {
+//   
+// });
 
 const port = process.env.PORT || 4000;
 
