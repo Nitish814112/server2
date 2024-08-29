@@ -17,12 +17,13 @@ async function connectToDb() {
 }
 
 app.use('/', async (req, res) => {
-    try {
-        let data = await db.collection('peaks').find({}).toArray();
-            res.status(200).send(data);
-          } catch (error) {
-            res.status(500).send({ error: 'Failed to fetch data' });
-          }
+    // try {
+    //     let data = await db.collection('peaks').find({}).toArray();
+    //         res.status(200).send(data);
+    //       } catch (error) {
+    //         res.status(500).send({ error: 'Failed to fetch data' });
+    //       }
+    res.send({message:"listen req..."})
 });
 
 // app.get('/data', async (req, res) => {
