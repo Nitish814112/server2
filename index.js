@@ -3,7 +3,7 @@ const app = express();
 require('dotenv').config();
 const { MongoClient } = require('mongodb');
 
-const client = new MongoClient('mongodb://localhost:27017');
+const client = new MongoClient(process.env.MONGO_URL || "mongodb://localhost:27017");
 let db;
 
 async function connectToDb() {
