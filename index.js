@@ -5,14 +5,14 @@ const { MongoClient } = require('mongodb');
 const app = express();
 
 // Ensure you have a valid MongoDB URL in your environment variables or fall back to localhost
-const client = new MongoClient(process.env.MONGO_URL || 'mongodb://localhost:27017', { useNewUrlParser: true, useUnifiedTopology: true });
+const client = new MongoClient(process.env.MONGO_URL || 'mongodb+srv://n814112:root@cluster0.ckgvg.mongodb.net/', { useNewUrlParser: true, useUnifiedTopology: true });
 
 let db;
 
 async function connectToDb() {
   try {
     await client.connect();
-    db = client.db('second_dataBase');
+    db = client.db('JavaScript_Interview_Question');
     console.log('Connected to MongoDB successfully!');
   } catch (error) {
     console.error('Failed to connect to MongoDB:', error);
@@ -28,7 +28,7 @@ app.get('/datata', async (req, res) => {
     if (!db) {
       throw new Error('Database not initialized');
     }
-    let data = await db.collection('peaks').find({}).toArray();
+    let data = await db.collection('Mock_Question').find({}).toArray();
     res.status(200).send(data);
   } catch (error) {
     console.error('Error fetching data:', error);
