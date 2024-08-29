@@ -1,13 +1,12 @@
 require('dotenv').config();
 const express = require('express');
 const { MongoClient } = require('mongodb');
-const cors = require('cors');
-
 
 const app = express();
-app.use(cors());
 
-const client = new MongoClient(process.env.MONGO_URL || 'mongodb+srv://n814112:root@cluster0.ckgvg.mongodb.net/', { useNewUrlParser: true, useUnifiedTopology: true });
+// Ensure you have a valid MongoDB URL in your environment variables or fall back to localhost
+const mongoUrl = process.env.MONGO_URL || 'mongodb+srv://n814112:root@cluster0.ckgvg.mongodb.net/';
+const client = new MongoClient(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true });
 
 let db;
 
@@ -18,6 +17,8 @@ async function connectToDb() {
     console.log('Connected to MongoDB successfully!');
   } catch (error) {
     console.error('Failed to connect to MongoDB:', error);
+    // Make sure to stop the server if the connection fails
+    process.exit(1);
   }
 }
 
@@ -33,20 +34,21 @@ app.get('/datata', async (req, res) => {
     let data = await db.collection('Mock_Question').find({}).toArray();
     res.status(200).send(data);
   } catch (error) {
-    console.error('Error fetching data:', error);
-    res.status(500).send({ error: 'Failed to fetch data' });
+    console.error('Error fetching data:', error.message); // More specific error message
+    res.status(500).send({ error: `Failed to fetch data: ${error.message}` });
   }
 });
 
 const port = process.env.PORT || 4000;
 
+// Start server only after the database connection is established
 connectToDb().then(() => {
   app.listen(port, () => {
     console.log('Listening on port', port);
   });
 }).catch(error => {
   console.error('Failed to connect to database:', error);
+  process.exit(1); // Exit the process if the connection fails
 });
 
-// Export the app for serverless deployment
 module.exports = app;
