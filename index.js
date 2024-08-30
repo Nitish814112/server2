@@ -38,6 +38,18 @@ app.get('/datata', async (req, res) => {
     res.status(500).send({ error: `Failed to fetch data: ${error.message}` });
   }
 });
+app.get('/data', async (req, res) => {
+  try {
+    if (!db) {
+      throw new Error('Database not initialized');
+    }
+    let data = await db.collection('Coding_Questions').find({}).toArray();
+    res.status(200).send(data);
+  } catch (error) {
+    console.error('Error fetching data:', error.message); // More specific error message
+    res.status(500).send({ error: `Failed to fetch data: ${error.message}` });
+  }
+});
 
 const port = process.env.PORT || 4000;
 
