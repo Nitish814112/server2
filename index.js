@@ -2,9 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const { MongoClient } = require('mongodb');
 
+
 const app = express();
 
-// Ensure you have a valid MongoDB URL in your environment variables or fall back to localhost
 const mongoUrl = process.env.MONGO_URL || 'mongodb+srv://n814112:root@cluster0.ckgvg.mongodb.net/';
 const client = new MongoClient(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true });
 
