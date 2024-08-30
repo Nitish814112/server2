@@ -1,9 +1,11 @@
 require('dotenv').config();
 const express = require('express');
 const { MongoClient } = require('mongodb');
+const cors=require('cors');
 
 
 const app = express();
+app.use(cors())
 
 const mongoUrl = process.env.MONGO_URL || 'mongodb+srv://n814112:root@cluster0.ckgvg.mongodb.net/';
 const client = new MongoClient(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true });
