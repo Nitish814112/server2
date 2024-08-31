@@ -43,6 +43,7 @@ async function connectToDb() {
   }
 }
 
+// Middleware to ensure DB connection is available
 app.use(async (req, res, next) => {
   if (!db) {
     try {
@@ -60,7 +61,7 @@ app.get('/', (req, res) => {
 
 app.get('/datata', async (req, res) => {
   try {
-    let data = await db.collection('Mock_Question').find({}).toArray();
+    const data = await db.collection('Mock_Question').find({}).toArray();
     res.status(200).send(data);
   } catch (error) {
     console.error('Error fetching data:', error.message);
@@ -70,7 +71,7 @@ app.get('/datata', async (req, res) => {
 
 app.get('/data', async (req, res) => {
   try {
-    let data = await db.collection('Coding_Questions').find({}).toArray();
+    const data = await db.collection('Coding_Questions').find({}).toArray();
     res.status(200).send(data);
   } catch (error) {
     console.error('Error fetching data:', error.message);
@@ -79,7 +80,8 @@ app.get('/data', async (req, res) => {
 });
 
 app.get('/receive', (req, res) => {
-  res.send({ messages: [] });  // Placeholder, implement actual message retrieval if needed
+  // Placeholder, implement actual message retrieval if needed
+  res.send({ messages: [] });
 });
 
 app.post('/send', (req, res) => {
