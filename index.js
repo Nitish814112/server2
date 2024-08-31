@@ -2,34 +2,16 @@ require('dotenv').config();
 const express = require('express');
 const { MongoClient } = require('mongodb');
 const cors = require('cors');
-const http = require('http');
-const socketIo = require('socket.io');
-const bodyParser = require('body-parser');
 
 const app = express();
-const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: {
-    origin: ["http://localhost:3001", "https://crack-moto.vercel.app"],
-    methods: ["GET", "POST"],
-    credentials: true,
-  }
-});
-
-app.use(cors({
-  origin: ["http://localhost:3001", "https://crack-moto.vercel.app"],
-  methods: ["GET", "POST"],
-  credentials: true,
-}));
-
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cors());
 
 const mongoUrl = process.env.MONGO_URL || 'mongodb+srv://n814112:root@cluster0.ckgvg.mongodb.net/';
 const client = new MongoClient(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true });
 
 let db;
 
+// Function to connect to the database
 async function connectToDb() {
   if (!db) {
     try {
@@ -45,14 +27,14 @@ async function connectToDb() {
 
 // Middleware to ensure DB connection is available
 app.use(async (req, res, next) => {
-  if (!db) {
-    try {
+  try {
+    if (!db) {
       await connectToDb();
-    } catch (error) {
-      return res.status(500).send({ error: 'Failed to connect to the database' });
     }
+    next();
+  } catch (error) {
+    res.status(500).send({ error: 'Failed to connect to the database' });
   }
-  next();
 });
 
 app.get('/', (req, res) => {
@@ -61,7 +43,7 @@ app.get('/', (req, res) => {
 
 app.get('/datata', async (req, res) => {
   try {
-    const data = await db.collection('Mock_Question').find({}).toArray();
+    let data = await db.collection('Mock_Question').find({}).toArray();
     res.status(200).send(data);
   } catch (error) {
     console.error('Error fetching data:', error.message);
@@ -71,7 +53,7 @@ app.get('/datata', async (req, res) => {
 
 app.get('/data', async (req, res) => {
   try {
-    const data = await db.collection('Coding_Questions').find({}).toArray();
+    let data = await db.collection('Coding_Questions').find({}).toArray();
     res.status(200).send(data);
   } catch (error) {
     console.error('Error fetching data:', error.message);
@@ -79,38 +61,11 @@ app.get('/data', async (req, res) => {
   }
 });
 
-app.get('/receive', (req, res) => {
-  // Placeholder, implement actual message retrieval if needed
-  res.send({ messages: [] });
-});
-
-app.post('/send', (req, res) => {
-  const { message } = req.body;
-
-  if (message) {
-    io.emit('server message', message);
-    res.send({ success: true, message: 'Message sent to clients' });
-  } else {
-    res.status(400).send({ error: 'Message content is required' });
-  }
-});
-
-io.on('connection', (socket) => {
-  console.log(`A user connected with ID: ${socket.id}`);
-
-  socket.on('disconnect', () => {
-    console.log(`User disconnected with ID: ${socket.id}`);
-  });
-
-  socket.on('error', (error) => {
-    console.error(`Socket error: ${error}`);
-  });
-});
-
 const port = process.env.PORT || 4000;
 
+// Start the server only after the initial database connection attempt
 connectToDb().then(() => {
-  server.listen(port, () => {
+  app.listen(port, () => {
     console.log('Listening on port', port);
   });
 }).catch(error => {
