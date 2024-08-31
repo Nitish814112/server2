@@ -2,9 +2,26 @@ require('dotenv').config();
 const express = require('express');
 const { MongoClient } = require('mongodb');
 const cors = require('cors');
+const http = require('http');
+const socketIo = require('socket.io');
+const bodyParser = require('body-parser');
 
 const app = express();
-app.use(cors());
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: "http://localhost:3001",
+    methods: ["GET", "POST"],
+  }
+});
+
+app.use(cors({
+  origin: "http://localhost:3001",
+  methods: ["GET", "POST"],
+  credentials: true
+}));
+app.use(bodyParser.json()); // To parse JSON bodies
+app.use(bodyParser.urlencoded({ extended: true }));
 
 const mongoUrl = process.env.MONGO_URL || 'mongodb+srv://n814112:root@cluster0.ckgvg.mongodb.net/';
 const client = new MongoClient(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -36,34 +53,36 @@ app.use(async (req, res, next) => {
   }
 });
 
-app.get('/', (req, res) => {
-  res.send({ message: "Serving on local" });
+// Handle GET request for receiving messages
+app.get('/receive', (req, res) => {
+  // Logic to fetch messages from the server or database
+  res.send({ messages: [] }); // Replace with actual messages if stored
 });
 
-app.get('/datata', async (req, res) => {
-  try {
-    let data = await db.collection('Mock_Question').find({}).toArray();
-    res.status(200).send(data);
-  } catch (error) {
-    console.error('Error fetching data:', error.message);
-    res.status(500).send({ error: `Failed to fetch data: ${error.message}` });
-  }
+// Handle POST request for sending messages
+app.post('/send', (req, res) => {
+  const { message } = req.body;
+
+  // Emit the message to all clients
+  io.emit('server message', message);
+
+  // Respond to the client with a confirmation
+  res.send({ success: true, message: 'Message sent to clients' });
 });
 
-app.get('/data', async (req, res) => {
-  try {
-    let data = await db.collection('Coding_Questions').find({}).toArray();
-    res.status(200).send(data);
-  } catch (error) {
-    console.error('Error fetching data:', error.message);
-    res.status(500).send({ error: `Failed to fetch data: ${error.message}` });
-  }
+// Set up Socket.IO
+io.on('connection', (socket) => {
+  console.log('A user connected');
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected');
+  });
 });
 
 const port = process.env.PORT || 4000;
 
 connectToDb().then(() => {
-  app.listen(port, () => {
+  server.listen(port, () => {
     console.log('Listening on port', port);
   });
 }).catch(error => {
