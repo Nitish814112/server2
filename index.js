@@ -10,18 +10,19 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: ["http://localhost:3001", "https://crack-moto.vercel.app"], // Allow both origins
+    origin: ["http://localhost:3001", "https://crack-moto.vercel.app"],
     methods: ["GET", "POST"],
     credentials: true,
   }
 });
 
 app.use(cors({
-  origin: ["http://localhost:3001", "https://crack-moto.vercel.app"], // Allow both origins
+  origin: ["http://localhost:3001", "https://crack-moto.vercel.app"],
   methods: ["GET", "POST"],
   credentials: true,
 }));
-app.use(bodyParser.json()); // To parse JSON bodies
+
+app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 const mongoUrl = process.env.MONGO_URL || 'mongodb+srv://n814112:root@cluster0.ckgvg.mongodb.net/';
@@ -42,16 +43,15 @@ async function connectToDb() {
   }
 }
 
-// Middleware to ensure DB connection is available
 app.use(async (req, res, next) => {
-  try {
-    if (!db) {
+  if (!db) {
+    try {
       await connectToDb();
+    } catch (error) {
+      return res.status(500).send({ error: 'Failed to connect to the database' });
     }
-    next();
-  } catch (error) {
-    res.status(500).send({ error: 'Failed to connect to the database' });
   }
+  next();
 });
 
 app.get('/', (req, res) => {
@@ -78,29 +78,30 @@ app.get('/data', async (req, res) => {
   }
 });
 
-// Handle GET request for receiving messages
 app.get('/receive', (req, res) => {
-  // Logic to fetch messages from the server or database
-  res.send({ messages: [] }); // Replace with actual messages if stored
+  res.send({ messages: [] });  // Placeholder, implement actual message retrieval if needed
 });
 
-// Handle POST request for sending messages
 app.post('/send', (req, res) => {
   const { message } = req.body;
 
-  // Emit the message to all clients
-  io.emit('server message', message);
-
-  // Respond to the client with a confirmation
-  res.send({ success: true, message: 'Message sent to clients' });
+  if (message) {
+    io.emit('server message', message);
+    res.send({ success: true, message: 'Message sent to clients' });
+  } else {
+    res.status(400).send({ error: 'Message content is required' });
+  }
 });
 
-// Set up Socket.IO
 io.on('connection', (socket) => {
-  console.log('A user connected');
+  console.log(`A user connected with ID: ${socket.id}`);
 
   socket.on('disconnect', () => {
-    console.log('User disconnected');
+    console.log(`User disconnected with ID: ${socket.id}`);
+  });
+
+  socket.on('error', (error) => {
+    console.error(`Socket error: ${error}`);
   });
 });
 
