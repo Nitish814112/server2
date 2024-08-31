@@ -4,28 +4,31 @@ const { MongoClient } = require('mongodb');
 const cors = require('cors');
 const http = require('http');
 const socketIo = require('socket.io');
+const bodyParser = require('body-parser');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "https://crack-moto.vercel.app", // Adjust this as needed
+    origin: ["http://localhost:3001", "https://crack-moto.vercel.app"], // Allow both origins
     methods: ["GET", "POST"],
+    credentials: true,
   }
 });
 
 app.use(cors({
-  origin: "https://crack-moto.vercel.app", // Adjust this as needed
+  origin: ["http://localhost:3001", "https://crack-moto.vercel.app"], // Allow both origins
   methods: ["GET", "POST"],
-  credentials: true
+  credentials: true,
 }));
+app.use(bodyParser.json()); // To parse JSON bodies
+app.use(bodyParser.urlencoded({ extended: true }));
 
 const mongoUrl = process.env.MONGO_URL || 'mongodb+srv://n814112:root@cluster0.ckgvg.mongodb.net/';
 const client = new MongoClient(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true });
 
 let db;
 
-// Function to connect to the database
 async function connectToDb() {
   if (!db) {
     try {
@@ -75,25 +78,26 @@ app.get('/data', async (req, res) => {
   }
 });
 
-// Handle Socket.IO connections and messages
+// Handle GET request for receiving messages
+app.get('/receive', (req, res) => {
+  // Logic to fetch messages from the server or database
+  res.send({ messages: [] }); // Replace with actual messages if stored
+});
+
+// Handle POST request for sending messages
+app.post('/send', (req, res) => {
+  const { message } = req.body;
+
+  // Emit the message to all clients
+  io.emit('server message', message);
+
+  // Respond to the client with a confirmation
+  res.send({ success: true, message: 'Message sent to clients' });
+});
+
+// Set up Socket.IO
 io.on('connection', (socket) => {
   console.log('A user connected');
-
-  // Handle messages from clients
-  socket.on('client message', async (msg) => {
-    console.log('Message received from client:', msg);
-    
-    // Save the message to the database
-    try {
-      await db.collection('messages').insertOne({ message: msg, timestamp: new Date() });
-      console.log('Message saved to database');
-    } catch (error) {
-      console.error('Error saving message to database:', error);
-    }
-
-    // Broadcast the message to all clients
-    io.emit('server message', msg);
-  });
 
   socket.on('disconnect', () => {
     console.log('User disconnected');
@@ -102,7 +106,6 @@ io.on('connection', (socket) => {
 
 const port = process.env.PORT || 4000;
 
-// Start the server only after the initial database connection attempt
 connectToDb().then(() => {
   server.listen(port, () => {
     console.log('Listening on port', port);
